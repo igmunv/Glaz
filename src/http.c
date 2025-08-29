@@ -3,6 +3,8 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void http_get(char* address){
     struct sockaddr_in server_address;
@@ -22,18 +24,27 @@ void http_get(char* address){
         return -1;
     }
 
-    char message[MESSAGE_LEN];
     char buffer[BUFFER_LEN];
 
-    // сервер нихуя не поймёт
-    message[0] = 'x';
-    message[1] = 'u';
-    message[2] = 'i';
+    char method_line[] = "GET";
+    char version_line[] = "HTTP/1.1\r\n";
+    char host_line[] = "Host: \r\n";
+    char user_agent_line[] = "User-Agent: \r\n";
+    char accept_line[] = "Accept: \r\n";
+    char connection_line[] = "Connection: \r\n";
+
+    char* request = malloc(MESSAGE_LEN);
+
+
+    char line1[] = "GET /secret HTTP/1.1\r\nHost: ";
+    char line2[] = "\r\nUser-Agent: Glaz/1.0\r\nAccept: text/html\r\nConnection: keep-alive\r\n";
+    sprintf(message, "%s%s%s", line1, address, line2);
 
     send(sock, message, MESSAGE_LEN, 0);
     recv(sock, &buffer, BUFFER_LEN, 0);
 
-    printf("Get: %s", buffer);
+    free(message);
+    printf("Get:\n%s", buffer);
 
     close(sock);
     return 0;
