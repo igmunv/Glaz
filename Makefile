@@ -1,6 +1,6 @@
 all:
-	gcc -o glaz src/main.c
+	gcc -o output/glaz src/main.c
 	$(MAKE) run;
 
 run:
-	./glaz
+	output/glaz
