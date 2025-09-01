@@ -6,10 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct header_struct{
-    unsigned char* head;
-    short size;
-} header_t;
+struct response_header_struct{
+        char* version;
+        char version_size;
+        char* status_code;
+        char status_code_size;
+        char* status;
+        char status_size;
+};
 
 int get_string_len(char* string){
     int len = 0;
@@ -19,34 +23,86 @@ int get_string_len(char* string){
     }
 }
 
-char is_end_head(char a, char b, char c, char d){
-    if (a == '\r' && b == '\n' && c == '\r' && d == '\n') return 1;
-    else return 0;
-}
-
 char is_end_str(char a, char b){
     if (a == '\r' && b == '\n') return 1;
     else return 0;
 }
 
-unsigned short get_head(unsigned char* response, int response_size, unsigned char* buffer){
 
+char is_end_head(char a, char b, char c, char d){
+    if (a == '\r' && b == '\n' && c == '\r' && d == '\n') return 1;
+    else return 0;
+}
+
+unsigned short get_header_struct(unsigned char* head, unsigned short head_size, struct header_struct* buffer_struct){
+
+    unsigned short line = 0;
+    unsigned short ptr_start = 0;
+    unsigned short ptr_end = 0;
+    for (int i = 0; i < head_size; i ++){
+
+        if (is_end_head(head[i], head[i+1], head[i+2], head[i+3])) {
+            line++;
+            // end head
+        };
+
+        if (is_end_str(head[i], head[i+1])) {
+            //get head ellements
+
+            ptr_end = i;
+
+            if (line == 0){
+                // get: VERSION STATUS_CODE STATUS
+
+                char numb = 0; // 0 - version, 1 - status_code, 2 - status
+                for (int p = ptr_start; p < ptr_end; p++){
+                    unsigned char s = head[p];
+
+                    if (s == ' ' || s == '\r'){
+                        switch (numb){
+                            case 0: {} // version
+                            case 1: {} // status_code
+                            case 2: {} // status
+                        }
+                        numb++;
+                    }
+                }
+            }
+
+            else{
+                // get other
+
+            }
+            ptr_start = i + 2;
+            line++;
+        }
+    }
+}
+
+
+unsigned short get_head(unsigned char* response, int response_size, unsigned char* buffer){
+    int buffer_size = 0;
     for (unsigned short i = 0; i < response_size-4; i++){
 
-        buffer[i] = response[i];
-
-        if (response[i] == '\0') return -1;
+        if (response[i] == '\0') {buffer_size = 0; break;}
         if (
             response[i] == '\r' &&
             response[i + 1] == '\n' &&
             response[i + 2] == '\r' &&
             response[i + 3] == '\n'
         ) {
-            buffer[i] = '\n';
-            return i;
+            buffer[i] = '\r';
+            buffer[i+1] = '\n';
+            buffer[i+2] = '\r';
+            buffer[i+3] = '\n';
+            break;
         }
+
+        buffer[i] = response[i];
+        buffer_size ++;
     }
-    return -1;
+
+    return buffer_size;
 }
 
 void http_get(char* address){
@@ -111,8 +167,9 @@ void http_get(char* address){
     char head[32768];
     unsigned short head_size = 0;
     head_size = get_head(buffer, response_size, &head);
+    if (head_size == 0) {printf("Head Size = 0!"); return;}
 
-    printf(" -- %s -- \n -- %d --\n", head, head_size);
+    printf("--%s-- \n --%d--", head, head_size);
 
     free(request);
 
