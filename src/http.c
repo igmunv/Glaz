@@ -34,7 +34,7 @@ char is_end_head(char a, char b, char c, char d){
     else return 0;
 }
 
-unsigned short get_header_struct(unsigned char* head, unsigned short head_size, struct header_struct* buffer_struct){
+unsigned short get_header_struct(unsigned char* head, unsigned short head_size, struct response_header_struct* buffer_struct){
 
     unsigned short line = 0;
     unsigned short ptr_start = 0;
@@ -42,8 +42,8 @@ unsigned short get_header_struct(unsigned char* head, unsigned short head_size, 
     for (int i = 0; i < head_size; i ++){
 
         if (is_end_head(head[i], head[i+1], head[i+2], head[i+3])) {
-            line++;
             // end head
+            return 0;
         };
 
         if (is_end_str(head[i], head[i+1])) {
@@ -54,16 +54,40 @@ unsigned short get_header_struct(unsigned char* head, unsigned short head_size, 
             if (line == 0){
                 // get: VERSION STATUS_CODE STATUS
 
+                unsigned short local_ptr_start = ptr_start;
+                unsigned short local_ptr_end = 0;
+
                 char numb = 0; // 0 - version, 1 - status_code, 2 - status
                 for (int p = ptr_start; p < ptr_end; p++){
                     unsigned char s = head[p];
 
                     if (s == ' ' || s == '\r'){
+                        local_ptr_end = p;
                         switch (numb){
-                            case 0: {} // version
-                            case 1: {} // status_code
-                            case 2: {} // status
+                            case 0: { // version
+
+                                char* buffer = malloc(256);
+                                char buffer_size = 0;
+                                for (int lp = local_ptr_start; lp < local_ptr_end; lp++){
+                                    buffer[buffer_size] = head[lp];
+                                    buffer_size++;
+                                }
+                                buffer_struct->version = buffer;
+                                buffer_struct->version_size = buffer_size;
+
+                            }
+                            case 1: { // status_code
+
+
+
+                            }
+                            case 2: { // status
+
+
+
+                            }
                         }
+                        local_ptr_start = p+1;
                         numb++;
                     }
                 }
@@ -71,10 +95,12 @@ unsigned short get_header_struct(unsigned char* head, unsigned short head_size, 
 
             else{
                 // get other
-
+                return -1;
             }
+
             ptr_start = i + 2;
             line++;
+
         }
     }
 }
@@ -172,6 +198,9 @@ void http_get(char* address){
     printf("--%s-- \n --%d--", head, head_size);
 
     free(request);
+
+
+    struct response_header_struct test;
 
 
     close(sock);
